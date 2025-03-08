@@ -1,5 +1,5 @@
 import { LanguageModelV1 } from '@ai-sdk/provider';
-import { aiSdk } from '@ai-sdk/ai';
+import { generateText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
@@ -31,7 +31,7 @@ async function testModel(modelId: string, model: LanguageModelV1) {
     console.log(`Sending prompt: "${prompt}"`);
     const startTime = Date.now();
     
-    const response = await aiSdk.generateText({
+    const response = await generateText({
       model,
       prompt,
     });
