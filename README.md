@@ -65,6 +65,7 @@ This project includes a test script that allows you to verify all the AI models 
    - `ANTHROPIC_API_KEY` - For Anthropic Claude models
    - `GOOGLE_GENERATIVE_AI_API_KEY` - For Google Gemini models
    - `GROQ_API_KEY` - For Groq models
+   - `MISTRAL_API_KEY` - For Mistral models
    - `PERPLEXITY_API_KEY` - For Perplexity models
    - `OPENROUTER_API_KEY` - For accessing various models through OpenRouter
    - `FIRECRAWL_API_KEY` - For web crawling capabilities
@@ -77,6 +78,7 @@ This project includes a test script that allows you to verify all the AI models 
    - Google's gemini-2.0-flash (chat-model-gemini)
    - Anthropic's claude-3-7-sonnet (chat-model-claude)
    - Groq's qwen-qwq-32b (chat-model-groq)
+   - Mistral's codestral-latest (chat-model-mistral)
    - Perplexity's sonar (chat-model-perplexity)
    - Google's gemini-2.0-flash-thinking-exp via OpenRouter (chat-model-reasoning)
 

@@ -28,6 +28,11 @@ export const chatModels: Array<ChatModel> = [
     description: 'groq surprise model',
   },
   {
+    id: 'chat-model-mistral',
+    name: 'Mistral model',
+    description: 'codestral-latest',
+  },
+  {
     id: 'chat-model-perplexity',
     name: 'perplexity model',
     description: 'perplexity sonar',

@@ -4,6 +4,7 @@ import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { groq } from '@ai-sdk/groq';
+import { mistral } from '@ai-sdk/mistral';
 import { perplexity } from '@ai-sdk/perplexity';
 import { openrouter } from '@openrouter/ai-sdk-provider';
 
@@ -17,6 +18,7 @@ const models: Record<string, LanguageModelV1> = {
   'chat-model-gemini': google('gemini-2.0-flash'),
   'chat-model-claude': anthropic('claude-3-7-sonnet-20250219'),
   'chat-model-groq': groq('qwen-qwq-32b'),
+  'chat-model-mistral': mistral('codestral-latest'),
   'chat-model-perplexity': perplexity('sonar'),
   'chat-model-reasoning': openrouter('google/gemini-2.0-flash-thinking-exp:free'),
 };

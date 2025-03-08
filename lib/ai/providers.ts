@@ -7,6 +7,7 @@ import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
+import { mistral } from "@ai-sdk/mistral";
 import { openrouter } from '@openrouter/ai-sdk-provider';
 import { perplexity } from '@ai-sdk/perplexity';
 import { isTestEnvironment } from '../constants';
@@ -24,6 +25,7 @@ export const myProvider = isTestEnvironment
         'chat-model-gemini': chatModel,
         'chat-model-groq': chatModel,
         'chat-model-claude': chatModel,
+        'chat-model-mistral': chatModel,
         'chat-model-perplexity': chatModel,
         'chat-model-reasoning': reasoningModel,
         'title-model': titleModel,
@@ -36,6 +38,7 @@ export const myProvider = isTestEnvironment
         "chat-model-gemini": google("gemini-2.0-flash"),
         "chat-model-groq": groq ("qwen-qwq-32b"),
         "chat-model-claude": anthropic("claude-3-7-sonnet-20250219"),
+        "chat-model-mistral": mistral("codestral-latest"),
         "chat-model-perplexity": perplexity("sonar"),
         "chat-model-reasoning": wrapLanguageModel({
           model: openrouter("google/gemini-2.0-flash-thinking-exp:free"),
