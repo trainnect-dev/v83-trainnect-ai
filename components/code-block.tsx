@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 interface CodeBlockProps {
   node: any;
   inline: boolean;
@@ -15,19 +17,17 @@ export function CodeBlock({
   ...props
 }: CodeBlockProps) {
   if (!inline) {
-    // Use a div with pre styling instead of actual pre element to avoid hydration errors
-    // when this component is rendered inside a <p> tag in markdown
+    // To fix hydration errors when rendered inside <p> tags, we need to use React.Fragment
+    // instead of div elements when this component might be inside a paragraph
     return (
-      <div className="not-prose">
-        {/* This div will break out of any parent paragraph context */}
-        <div 
-          {...props}
-          className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
-          style={{ whiteSpace: 'pre' }}
-        >
-          <code className="whitespace-pre-wrap break-words">{children}</code>
-        </div>
-      </div>
+      // Using a code element directly without wrapping divs to avoid nesting issues
+      <code
+        {...props}
+        className={`block text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
+        style={{ whiteSpace: 'pre', display: 'block' }}
+      >
+        {children}
+      </code>
     );
   } else {
     return (

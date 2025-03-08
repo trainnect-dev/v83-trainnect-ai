@@ -8,6 +8,14 @@ const components: Partial<Components> = {
   // @ts-expect-error
   code: CodeBlock,
   pre: ({ children }) => <>{children}</>,
+  // Override paragraph to prevent nesting issues with code blocks
+  p: ({ node, children, ...props }) => {
+    return (
+      <p className="my-2" {...props}>
+        {children}
+      </p>
+    );
+  },
   ol: ({ node, children, ...props }) => {
     return (
       <ol className="list-decimal list-outside ml-4" {...props}>
