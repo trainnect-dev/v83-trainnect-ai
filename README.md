@@ -64,13 +64,21 @@ This project includes a test script that allows you to verify all the AI models 
    - `OPENAI_API_KEY` - For OpenAI models
    - `ANTHROPIC_API_KEY` - For Anthropic Claude models
    - `GOOGLE_GENERATIVE_AI_API_KEY` - For Google Gemini models
+   - `GROQ_API_KEY` - For Groq models
+   - `PERPLEXITY_API_KEY` - For Perplexity models
    - `OPENROUTER_API_KEY` - For accessing various models through OpenRouter
+   - `FIRECRAWL_API_KEY` - For web crawling capabilities
+   - `TAVILY_API_KEY` - For search functionality
+   - `DEEPSEEK_API_KEY` - For DeepSeek models (optional)
+   - `DEEPSEEK_API_BASE_URL` - Base URL for DeepSeek API (optional)
 
 2. The test script is located at `test-models.ts` and includes tests for:
-   - OpenAI's o3-mini (chat-model-small)
-   - Google's gemini-2.0-flash (chat-model-medium)
-   - Anthropic's claude-3-7-sonnet (chat-model-large)
-   - DeepSeek's deepseek-r1-distill-llama-70b via OpenRouter (chat-model-reasoning)
+   - OpenAI's o3-mini (chat-model-openai)
+   - Google's gemini-2.0-flash (chat-model-gemini)
+   - Anthropic's claude-3-7-sonnet (chat-model-claude)
+   - Groq's qwen-qwq-32b (chat-model-groq)
+   - Perplexity's sonar (chat-model-perplexity)
+   - Google's gemini-2.0-flash-thinking-exp via OpenRouter (chat-model-reasoning)
 
 ### Running the Tests
 
