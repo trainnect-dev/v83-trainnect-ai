@@ -1,2 +1,4 @@
 
 
+pnpm add @ai-sdk/perplexity
+

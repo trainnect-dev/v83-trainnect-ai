@@ -6,7 +6,9 @@ import {
 import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
+import { groq } from "@ai-sdk/groq";
 import { openrouter } from '@openrouter/ai-sdk-provider';
+import { perplexity } from '@ai-sdk/perplexity';
 import { isTestEnvironment } from '../constants';
 import {
   artifactModel,
@@ -20,7 +22,9 @@ export const myProvider = isTestEnvironment
       languageModels: {
         'chat-model-openai': chatModel,
         'chat-model-gemini': chatModel,
+        'chat-model-groq': chatModel,
         'chat-model-claude': chatModel,
+        'chat-model-perplexity': chatModel,
         'chat-model-reasoning': reasoningModel,
         'title-model': titleModel,
         'artifact-model': artifactModel,
@@ -30,7 +34,9 @@ export const myProvider = isTestEnvironment
       languageModels: {
         "chat-model-openai": openai("o3-mini"),
         "chat-model-gemini": google("gemini-2.0-flash"),
+        "chat-model-groq": groq ("qwen-qwq-32b"),
         "chat-model-claude": anthropic("claude-3-7-sonnet-20250219"),
+        "chat-model-perplexity": perplexity("sonar"),
         "chat-model-reasoning": wrapLanguageModel({
           model: openrouter("google/gemini-2.0-flash-thinking-exp:free"),
           //model: openrouter("google/gemini-2.0-flash-thinking-exp:free"),

@@ -119,4 +119,10 @@ pnpm store prune
 # Then reinstall dependencies
 ```bash
 pnpm install
+```
+# Run the development server
+```bash
 pnpm dev
+
+# To shut down the development server
+pnpm stop

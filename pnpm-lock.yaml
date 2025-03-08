@@ -17,9 +17,15 @@ importers:
       '@ai-sdk/google':
         specifier: ^1.1.20
         version: 1.1.20(zod@3.24.2)
+      '@ai-sdk/groq':
+        specifier: 1.1.12
+        version: 1.1.12(zod@3.24.2)
       '@ai-sdk/openai':
         specifier: 1.2.1
         version: 1.2.1(zod@3.24.2)
+      '@ai-sdk/perplexity':
+        specifier: 1.0.4
+        version: 1.0.4(zod@3.24.2)
       '@ai-sdk/react':
         specifier: ^1.1.21
         version: 1.1.21(react@19.0.0-rc-603e6108-20241029)(zod@3.24.2)
@@ -288,6 +294,12 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
+  '@ai-sdk/groq@1.1.12':
+    resolution: {integrity: sha512-Cjvqrd1RLpdo6k7KQCENLiEDIYjXQdkfWcsBWn9WiGkiXgLyOwBZhxV0HK1jJKl17zO2AU4+QJODaqR9rQkLRA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
   '@ai-sdk/openai-compatible@0.1.13':
     resolution: {integrity: sha512-hgj6BdvasVXCTmJwbsiWo+e626GkmEBJKG8PYwpVq7moLWj93wJnfBNlDjxVjhZ32d5KGT32RIMZjqaX8QkClg==}
     engines: {node: '>=18'}
@@ -296,6 +308,12 @@ packages:
 
   '@ai-sdk/openai@1.2.1':
     resolution: {integrity: sha512-UtVDNrmrKzb3b4T9bnpduXs4FKpWGn+sH5qaFP1mtxOPeYGUF9OoJfGilH3CNfqGAE4QdZh/LT3IV6GHacooGg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
+  '@ai-sdk/perplexity@1.0.4':
+    resolution: {integrity: sha512-uI8dpk1gz8a6+eHgNssy2hoa8dBKb5UJniSXWm4lENmJtu6Db38llQCb2sbU8EZu+qIOuv91auuF9t2+eaVjng==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -4007,6 +4025,12 @@ snapshots:
       '@ai-sdk/provider-utils': 2.1.11(zod@3.24.2)
       zod: 3.24.2
 
+  '@ai-sdk/groq@1.1.12(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.10
+      '@ai-sdk/provider-utils': 2.1.11(zod@3.24.2)
+      zod: 3.24.2
+
   '@ai-sdk/openai-compatible@0.1.13(zod@3.24.2)':
     dependencies:
       '@ai-sdk/provider': 1.0.10
@@ -4014,6 +4038,12 @@ snapshots:
       zod: 3.24.2
 
   '@ai-sdk/openai@1.2.1(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.10
+      '@ai-sdk/provider-utils': 2.1.11(zod@3.24.2)
+      zod: 3.24.2
+
+  '@ai-sdk/perplexity@1.0.4(zod@3.24.2)':
     dependencies:
       '@ai-sdk/provider': 1.0.10
       '@ai-sdk/provider-utils': 2.1.11(zod@3.24.2)

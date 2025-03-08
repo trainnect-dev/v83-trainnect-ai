@@ -23,6 +23,16 @@ export const chatModels: Array<ChatModel> = [
     description: 'claude-3-7-sonnet',
   },
   {
+    id: 'chat-model-groq',
+    name: 'Groq model',
+    description: 'groq surprise model',
+  },
+  {
+    id: 'chat-model-perplexity',
+    name: 'perplexity model',
+    description: 'perplexity sonar',
+  },
+  {
     id: 'chat-model-reasoning',
     name: 'Openrouter reasoning',
     description: 'google/gemini-2.0-flash-thinking-exp:free',
