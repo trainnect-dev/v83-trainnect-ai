@@ -1,0 +1,335 @@
+---
+title: Adding Multi-Modal capabilities to your Vercel AI SDK Chatbot
+description: Learn how to Add Multi-Modal capabilities to your Vercel AI SDK Chatbot that can process images and PDFs with the AI SDK.
+
+<Note>
+  The AI SDK is designed to be a unified interface to interact with any large
+  language model. This means that you can change model and providers with just
+  a few lines of code! Learn more about [available providers](/providers) and
+  [building custom providers](/providers/community-providers/custom-providers)
+  in the [providers](/providers) section.
+</Note>
+---
+
+</Note>
+How to Add Multi-Modal capabilities to your Vercel AI SDK Chatbot that is capable of understanding both images and PDFs and can process images and PDFs with the AI SDK.
+</Note>
+
+
+Multi-modal refers to the ability of the chatbot to understand and generate responses in multiple formats, such as text, images, PDFs, and videos. In this example, we will focus on sending images and PDFs and generating text-based responses.
+
+Different AI providers have varying levels of multi-modal support, for example:
+
+- Anthropic (Sonnet 3.7): Supports image and PDF input
+"chat-model-claude": anthropic("claude-3-7-sonnet"),
+
+
+- Google (Gemini 2.0): Supports image and PDF input
+"chat-model-gemini": google("gemini-2.0-flash"),
+     
+- OpenAI (gpt-4o): Supports image input  
+"chat-model-gpt-4o": openai("gpt-4o"),    
+
+## Implementation Plan
+
+You will need to:
+
+- Update Your Existing Route Handler to handle incoming chat messages and generate responses.
+- Update your Existing UI, without breaking your UI existing functionality.
+- Add the ability to your chatbot that is capable of understanding both images and PDFs and can process images and PDFs with the AI SDK and attach them alongside the chat messages.
+
+To make sure that your chatbot is multi-modal, and that is capable of understanding both images and PDFs and can process images and PDFs with the AI SDK here is how to add that ability To send attachments alongside a message with the `useChat` hook: by [ we will provide a `FileList` object ](/docs/ai-sdk-ui/chatbot#filelist).
+
+## Update Your Existing Route Handler without breaking your existing functionality
+
+Update your existing route handler, `app/api/chat/route.ts` and add the code that is relevant to your existing codebase without breaking your existing UI functionality:
+
+### Adding PDF support you must Modify/Update your route handler:
+
+EXAMPLE:
+
+```tsx filename="app/api/chat/route.ts" 
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+import { streamText } from 'ai';
+
+export const maxDuration = 30;
+
+export async function POST(req: Request) {
+  const { messages }: { messages: Message[] } = await req.json();
+
+  // check if user has sent a PDF
+  const messagesHavePDF = messages.some(message =>
+    message.experimental_attachments?.some(
+      a => a.contentType === 'application/pdf',
+    ),
+  );
+
+  const result = streamText({
+    model: messagesHavePDF
+      ? anthropic('claude-3-7-sonnet-latest')
+      : googlr('gemini-2.0-flash')
+      : openai('gpt-4o'),
+    messages,
+  });
+
+  return result.toDataStreamResponse();
+}
+```
+!!! NOTE remember to update your chat interface without breaking your existing functionality
+To display PDFs in your chat interface, update the message rendering code in your frontend to show PDF attachments in an `<iframe>`:
+
+```tsx filename="app/page.tsx" 
+'use client';
+
+import { useChat } from '@ai-sdk/react';
+import { useRef, useState } from 'react';
+import Image from 'next/image';
+
+export default function Chat() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat();
+
+  const [files, setFiles] = useState<FileList | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+      {messages.map(m => (
+        <div key={m.id} className="whitespace-pre-wrap">
+          {m.role === 'user' ? 'User: ' : 'AI: '}
+          {m.content}
+          <div>
+            {m?.experimental_attachments
+              ?.filter(
+                attachment =>
+                  attachment?.contentType?.startsWith('image/') ||
+                  attachment?.contentType?.startsWith('application/pdf'),
+              )
+              .map((attachment, index) =>
+                attachment.contentType?.startsWith('image/') ? (
+                  <Image
+                    key={`${m.id}-${index}`}
+                    src={attachment.url}
+                    width={500}
+                    height={500}
+                    alt={attachment.name ?? `attachment-${index}`}
+                  />
+                ) : attachment.contentType?.startsWith('application/pdf') ? (
+                  <iframe
+                    key={`${m.id}-${index}`}
+                    src={attachment.url}
+                    width={500}
+                    height={600}
+                    title={attachment.name ?? `attachment-${index}`}
+                  />
+                ) : null,
+              )}
+          </div>
+        </div>
+      ))}
+
+      <form
+        className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl space-y-2"
+        onSubmit={event => {
+          handleSubmit(event, {
+            experimental_attachments: files,
+          });
+
+          setFiles(undefined);
+
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        }}
+      >
+        <input
+          type="file"
+          className=""
+          onChange={event => {
+            if (event.target.files) {
+              setFiles(event.target.files);
+            }
+          }}
+          multiple
+          ref={fileInputRef}
+        />
+        <input
+          className="w-full p-2"
+          value={input}
+          placeholder="Say something..."
+          onChange={handleInputChange}
+        />
+      </form>
+    </div>
+  );
+}
+```
+
+
+<Note>
+  Make sure you add the `"use client"` directive to the top of your file. This
+  allows you to add interactivity with Javascript.
+</Note>
+
+This page utilizes the `useChat` hook, which will, by default, use the `POST` API route you created earlier (`/api/chat`). The hook provides functions and state for handling user input and form submission. The `useChat` hook provides multiple utility functions and state variables:
+
+!!! Important since our apps input field already has a paperclip icon, we will use that to trigger the file upload that is capable of understanding both images and PDFs and can process images and PDFs with the AI SDK. 
+
+- `messages` - the current chat messages (an array of objects with `id`, `role`, and `content` properties).
+- `input` - the current value of the user's input field.
+- `handleInputChange` and `handleSubmit` - functions to handle user interactions (typing into the input field and submitting the form, respectively).
+- `status` - the status of the API request.
+
+
+Create state to hold the files and create a ref to the file input field.
+!!! Important since our apps input field already has a paperclip icon, we will use that to trigger the file upload that is capable of understanding both images and PDFs and can process images and PDFs with the AI SDK. 
+
+1. Create state to hold the files and create a ref to the file input field.
+
+2. Display the "uploaded" files in the UI.
+3. Update the `onSubmit` function, to call the `handleSubmit` function manually, passing the the files as an option using the `experimental_attachments` key.
+4. Including the `onChange` handler to handle updating the files state.
+!!! Important since our apps input field already has a paperclip icon, we will use that to trigger the file upload that is capable of understanding both images and PDFs and can process images and PDFs with the AI SDK. 
+
+## Working with PDFs or Images:  Here's how to update / modify the code to use Anthropic and Gemini:
+
+To enable PDF or image support, make sure you switch to a provider that handles PDFs like Google's Gemini or Anthropic's Claude. 
+
+Now your chatbot can process both images and PDFs! You automatically route PDF requests to Claude Sonnet 3.7 or Googles gemini-2.0-flash model and image requests to OpenAI's gpt-4o or Googles gemini-2.0-flash model.
+
+Try uploading a PDF and asking questions about its contents.
+
+<Note>
+  When switching providers, be sure to check the [provider
+  documentation](/providers/ai-sdk-providers) for specific file size limits and
+  supported file types.
+</Note>
+
+If you have not done already Update your environment variables:
+
+```env filename=".env.local" highlight="2"
+OPENAI_API_KEY=xxxxxxxxx
+GOOGLE_GENERATIVE_AI_API_KEY=****
+ANTHROPIC_API_KEY=xxxxxxxxx
+```
+
+<Note>
+  Here is the list of providers in our apps lib/ai/providers.ts file
+
+```ts
+import {
+  customProvider,
+  extractReasoningMiddleware,
+  wrapLanguageModel,
+} from 'ai';
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+import { groq } from "@ai-sdk/groq";
+import { mistral } from "@ai-sdk/mistral";
+import { openrouter } from '@openrouter/ai-sdk-provider';
+import { perplexity } from '@ai-sdk/perplexity';
+import { isTestEnvironment } from '../constants';
+import {
+  artifactModel,
+  chatModel,
+  reasoningModel,
+  titleModel,
+} from './models.test';
+
+export const myProvider = isTestEnvironment
+  ? customProvider({
+      languageModels: {
+        'chat-model-openai': chatModel,
+        'chat-model-gemini': chatModel,
+        'chat-model-groq': chatModel,
+        'chat-model-claude': chatModel,
+        'chat-model-mistral': chatModel,
+        'chat-model-perplexity': chatModel,
+        'chat-model-reasoning': reasoningModel,
+        'title-model': titleModel,
+        'artifact-model': artifactModel,
+      },
+    })
+  : customProvider({
+      languageModels: {
+        "chat-model-o3-mini": openai("o3-mini"),
+        "chat-model-gpt-4o": openai("gpt-4o"),
+        "chat-model-gemini": google("gemini-2.0-flash"),
+        "chat-model-groq": groq ("qwen-qwq-32b"),
+        "chat-model-claude": anthropic("claude-3-7-sonnet"),
+        "chat-model-mistral": mistral("codestral-latest"),
+        "chat-model-perplexity": perplexity("sonar"),
+        "chat-model-reasoning": wrapLanguageModel({
+          model: openrouter("google/gemini-2.0-flash-thinking-exp:free"),
+          //model: openrouter("google/gemini-2.0-flash-thinking-exp:free"),
+          //model: openrouter("deepseek/deepseek-r1-distill-llama-70b"),
+          //model: openrouter("microsoft/phi-4"),
+          middleware: extractReasoningMiddleware({ tagName: 'think' }),
+        }),
+        'title-model': openai('claude-3-7-sonnet'),
+        'artifact-model': openai('claude-3-7-sonnet'),
+      },
+      imageModels: {
+        'small-model': openai.image('dall-e-3'),
+        // 'large-model': openai.image('dall-e-3'),
+      },
+    });
+  ```
+
+Here is the list of models in our apps lib/ai/models.ts file
+
+```ts
+export const DEFAULT_CHAT_MODEL: string = 'chat-model-openai';
+
+interface ChatModel {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export const chatModels: Array<ChatModel> = [
+  {
+    id: 'chat-model-o3-mini',
+    name: 'Openai model',
+    description: 'o3-mini',
+  },
+  {
+    id: 'chat-model-gpt-4o',
+    name: 'Openai model',
+    description: 'gpt-4o',
+  },
+  {
+    id: 'chat-model-gemini',
+    name: 'Gemini model',
+    description: 'gemini-2.0-flash',
+  },
+  {
+    id: 'chat-model-claude',
+    name: 'Claude model',
+    description: 'claude-3-7-sonnet',
+  },
+  {
+    id: 'chat-model-groq',
+    name: 'Groq model',
+    description: 'groq surprise model',
+  },
+  {
+    id: 'chat-model-mistral',
+    name: 'Mistral model',
+    description: 'codestral-latest',
+  },
+  {
+    id: 'chat-model-perplexity',
+    name: 'perplexity model',
+    description: 'perplexity sonar',
+  },
+  {
+    id: 'chat-model-reasoning',
+    name: 'Openrouter reasoning',
+    description: 'google/gemini-2.0-flash-thinking-exp:free',
+  },
+];
+```
+</Note>
