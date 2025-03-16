@@ -1,3 +1,5 @@
+import * as Langtrace from '@langtrase/typescript-sdk';
+
 import {
   customProvider,
   extractReasoningMiddleware,
@@ -17,6 +19,9 @@ import {
   reasoningModel,
   titleModel,
 } from './models.test';
+
+// Initialize the langtrace SDK
+Langtrace.init({write_spans_to_console: false, disable_latest_version_check: true})
 
 export const myProvider = isTestEnvironment
   ? customProvider({
@@ -48,7 +53,7 @@ export const myProvider = isTestEnvironment
           middleware: extractReasoningMiddleware({ tagName: 'think' }),
         }),
         'title-model': openai('o3-mini'),
-        'artifact-model': openai('o3-mini'),
+        'artifact-model': anthropic('claude-3-7-sonnet-20250219'),
       },
       imageModels: {
         'small-model': openai.image('dall-e-3'),

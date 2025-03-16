@@ -10,6 +10,7 @@ import { PencilEditIcon, SparklesIcon } from './icons';
 import { Markdown } from './markdown';
 import { MessageActions } from './message-actions';
 import { PreviewAttachment } from './preview-attachment';
+import { PDFViewer } from './pdf-viewer';
 import { Weather } from './weather';
 import equal from 'fast-deep-equal';
 import { cn } from '@/lib/utils';
@@ -77,10 +78,17 @@ const PurePreviewMessage = ({
                 className="flex flex-row justify-end gap-2"
               >
                 {message.experimental_attachments.map((attachment) => (
-                  <PreviewAttachment
-                    key={attachment.url}
-                    attachment={attachment}
-                  />
+                  <div key={attachment.url} className="flex flex-col gap-1">
+                    <PreviewAttachment
+                      attachment={attachment}
+                    />
+                    {attachment.contentType === 'application/pdf' && (
+                      <PDFViewer 
+                        url={attachment.url} 
+                        filename={attachment.name}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             )}

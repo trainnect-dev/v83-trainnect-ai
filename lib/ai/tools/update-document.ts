@@ -3,6 +3,7 @@ import { Session } from 'next-auth';
 import { z } from 'zod';
 import { getDocumentById, saveDocument } from '@/lib/db/queries';
 import { documentHandlersByArtifactKind } from '@/lib/artifacts/server';
+import * as Langtrace from '@langtrase/typescript-sdk';
 
 interface UpdateDocumentProps {
   session: Session;
@@ -19,42 +20,52 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
         .describe('The description of changes that need to be made'),
     }),
     execute: async ({ id, description }) => {
-      const document = await getDocumentById({ id });
+      return await Langtrace.withLangTraceRootSpan(async (spanId, traceId) => {
+        const document = await getDocumentById({ id });
 
-      if (!document) {
-        return {
-          error: 'Document not found',
-        };
-      }
+        if (!document) {
+          return {
+            error: 'Document not found',
+          };
+        }
 
-      dataStream.writeData({
-        type: 'clear',
-        content: document.title,
-      });
+        return await Langtrace.withAdditionalAttributes(async () => {
+          dataStream.writeData({
+            type: 'clear',
+            content: document.title,
+          });
 
-      const documentHandler = documentHandlersByArtifactKind.find(
-        (documentHandlerByArtifactKind) =>
-          documentHandlerByArtifactKind.kind === document.kind,
-      );
+          const documentHandler = documentHandlersByArtifactKind.find(
+            (documentHandlerByArtifactKind) =>
+              documentHandlerByArtifactKind.kind === document.kind,
+          );
 
-      if (!documentHandler) {
-        throw new Error(`No document handler found for kind: ${document.kind}`);
-      }
+          if (!documentHandler) {
+            throw new Error(`No document handler found for kind: ${document.kind}`);
+          }
 
-      await documentHandler.onUpdateDocument({
-        document,
-        description,
-        dataStream,
-        session,
-      });
+          await documentHandler.onUpdateDocument({
+            document,
+            description,
+            dataStream,
+            session,
+          });
 
-      dataStream.writeData({ type: 'finish', content: '' });
+          dataStream.writeData({ type: 'finish', content: '' });
 
-      return {
-        id,
-        title: document.title,
-        kind: document.kind,
-        content: 'The document has been updated successfully.',
-      };
+          return {
+            id,
+            title: document.title,
+            kind: document.kind,
+            content: 'The document has been updated successfully.',
+          };
+        }, {
+          document_id: id,
+          document_title: document.title,
+          document_kind: document.kind,
+          description_length: description.length,
+          user_id: session.user?.id || 'unknown',
+        });
+      }, 'update_document_tool');
     },
   });

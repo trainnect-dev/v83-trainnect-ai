@@ -145,6 +145,8 @@ function PureMultimodalInput({
     formData.append('file', file);
 
     try {
+      // Route structure needs to match the app/(chat)/api/files/upload directory structure
+      // but in the URL we don't include the parentheses
       const response = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData,
@@ -160,9 +162,12 @@ function PureMultimodalInput({
           contentType: contentType,
         };
       }
-      const { error } = await response.json();
-      toast.error(error);
+      const errorData = await response.json();
+      const errorMessage = errorData.details || errorData.error || 'Upload failed';
+      toast.error(errorMessage);
+      console.error('Upload error:', errorData);
     } catch (error) {
+      console.error('Upload exception:', error);
       toast.error('Failed to upload file, please try again!');
     }
   };
@@ -171,7 +176,28 @@ function PureMultimodalInput({
     async (event: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
 
+      if (files.length === 0) return;
+
+      // Validate file types client-side before uploading
+      const validFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      const invalidFiles = files.filter(file => !validFileTypes.includes(file.type));
+
+      if (invalidFiles.length > 0) {
+        toast.error('Only JPEG, PNG, WebP images and PDF files are supported');
+        return;
+      }
+
+      // Validate file sizes
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      const oversizedFiles = files.filter(file => file.size > maxSize);
+
+      if (oversizedFiles.length > 0) {
+        toast.error('Files must be smaller than 10MB');
+        return;
+      }
+
       setUploadQueue(files.map((file) => file.name));
+      toast.info(`Uploading ${files.length} file(s)...`);
 
       try {
         const uploadPromises = files.map((file) => uploadFile(file));
@@ -180,14 +206,24 @@ function PureMultimodalInput({
           (attachment) => attachment !== undefined,
         );
 
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
+        if (successfullyUploadedAttachments.length > 0) {
+          setAttachments((currentAttachments) => [
+            ...currentAttachments,
+            ...successfullyUploadedAttachments,
+          ]);
+          toast.success(`Successfully uploaded ${successfullyUploadedAttachments.length} file(s)`);
+        } else {
+          toast.error('No files were uploaded successfully');
+        }
       } catch (error) {
         console.error('Error uploading files!', error);
+        toast.error('Upload failed. Please try again.');
       } finally {
         setUploadQueue([]);
+        // Clear the file input so the same file can be selected again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     },
     [setAttachments],

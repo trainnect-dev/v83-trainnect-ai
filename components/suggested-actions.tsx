@@ -21,9 +21,9 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
       action: 'Create a New Full Technical Course?',
     },
     {
-      title: 'Write code to',
-      label: `demonstrate djikstra's algorithm`,
-      action: `Write code to demonstrate djikstra's algorithm`,
+      title: 'Create a Step by Step',
+      label: `Trainer Guide`,
+      action: `Create a Step by Step Trainer Guide for a new full course or outline, ask the user to upload a pdf`,
     },
     {
       title: 'Create a New',

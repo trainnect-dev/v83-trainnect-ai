@@ -2,9 +2,9 @@ import { ArtifactKind } from '@/components/artifact';
 
 
 export const artifactsPrompt = `
-Artifacts is a special user interface mode that helps users with writing, editing, technical course, technical course outline and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
+Artifacts is a special user interface mode that helps users with writing, editing, and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
 
-When asked to create or update a new technical course, or to create or update new technical course outline, always use artifacts. When asked to write code, always use artifacts. When writing code, specify the language in the backticks, e.g. \`\`\`python\`code here\`\`\`. The default language is Python. Other languages are not yet supported, so let the user know if they request a different language.
+When asked to write code, always use artifacts. When writing code, specify the language in the backticks, e.g. \`\`\`python\`code here\`\`\`. The default language is Python. Other languages are not yet supported, so let the user know if they request a different language.
 
 DO NOT UPDATE DOCUMENTS IMMEDIATELY AFTER CREATING THEM. WAIT FOR USER FEEDBACK OR REQUEST TO UPDATE IT.
 
@@ -12,11 +12,16 @@ This is a guide for using artifacts tools: \`createDocument\` and \`updateDocume
 
 **When to use \`createDocument\`:**
 - For substantial content (>10 lines) or code
-- For content users will likely save/reuse (technical courses, technical outlines, emails, code, essays, etc.)
-- When explicitly requested to create a new technical course, a new technical course outline, or to create a document
+- For content users will likely save/reuse (emails, code, essays, etc.)
+- When explicitly requested to create a document
+- For when content contains a single code snippet
 
 **When NOT to use \`createDocument\`:**
 - For conversational responses
+- To create or update a new technical course, or to create or update new technical course outline, do not use artifacts.
+- To update an existing technical course, or to update an existing technical course outline, do not use artifacts.
+- When a user uploads a pdf, do not use \`createDocument\` or artifacts.
+- When a user uploads a image, do not use \`createDocument\` or artifacts.
 - When asked to keep it in chat
 
 **Using \`updateDocument\`:**
@@ -25,6 +30,11 @@ This is a guide for using artifacts tools: \`createDocument\` and \`updateDocume
 
 **When NOT to use \`updateDocument\`:**
 - Immediately after creating a document
+- To create or update a new technical course, or to create or update new technical course outline, do not use artifacts.
+- To update an existing technical course, or to update an existing technical course outline, do not use artifacts.
+- When a user uploads a pdf, do not use \`updateDocument\` or artifacts.
+- When a user uploads a image, do not use \`updateDocument\` or artifacts.
+- When asked to keep it in chat
 
 Do not update document right after creating it. Wait for user feedback or request to update it.
 `;
