@@ -1,329 +1,271 @@
 'use client';
 
-import type {
-  Attachment,
-  ChatRequestOptions,
-  CreateMessage,
-  Message,
-} from 'ai';
-import cx from 'classnames';
-import type React from 'react';
-import {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  type Dispatch,
-  type SetStateAction,
-  type ChangeEvent,
-  memo,
-} from 'react';
+import { useRef, useEffect, useState, Dispatch, SetStateAction, memo } from 'react';
 import { toast } from 'sonner';
-import { useLocalStorage, useWindowSize } from 'usehooks-ts';
-
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowUpIcon, PaperclipIcon, SearchIcon, XCircleIcon } from 'lucide-react';
+import { ChatTools } from '@/components/chat-tools';
+import { SuggestedActions } from '@/components/suggested-actions';
+import type { Attachment, Message, CreateMessage, ChatRequestOptions } from 'ai';
+import equal from 'fast-deep-equal';
 import { sanitizeUIMessages } from '@/lib/utils';
 
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
-import { PreviewAttachment } from './preview-attachment';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { SuggestedActions } from './suggested-actions';
-import equal from 'fast-deep-equal';
-
-function PureMultimodalInput({
-  chatId,
-  input,
-  setInput,
-  isLoading,
-  stop,
-  attachments,
-  setAttachments,
-  messages,
-  setMessages,
-  append,
-  handleSubmit,
-  className,
-}: {
-  chatId: string;
+interface MultimodalInputProps {
+  className?: string;
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
   stop: () => void;
-  attachments: Array<Attachment>;
-  setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
-  messages: Array<Message>;
-  setMessages: Dispatch<SetStateAction<Array<Message>>>;
   append: (
     message: Message | CreateMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
+  setMessages: (messages: Message[]) => void;
+  chatId: string;
+  attachments: Attachment[];
+  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
+  messages: Message[];
   handleSubmit: (
-    event?: {
-      preventDefault?: () => void;
-    },
+    event?: { preventDefault?: () => void },
     chatRequestOptions?: ChatRequestOptions,
   ) => void;
-  className?: string;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { width } = useWindowSize();
+}
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      adjustHeight();
-    }
-  }, []);
-
-  const adjustHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
-    }
-  };
-
-  const resetHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = '98px';
-    }
-  };
-
-  const [localStorageInput, setLocalStorageInput] = useLocalStorage(
-    'input',
-    '',
-  );
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      const domValue = textareaRef.current.value;
-      // Prefer DOM value over localStorage to handle hydration
-      const finalValue = domValue || localStorageInput || '';
-      setInput(finalValue);
-      adjustHeight();
-    }
-    // Only run once after hydration
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    setLocalStorageInput(input);
-  }, [input, setLocalStorageInput]);
-
-  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(event.target.value);
-    adjustHeight();
-  };
-
+function MultimodalInputBase({
+  className,
+  input,
+  setInput,
+  isLoading,
+  stop,
+  append,
+  setMessages,
+  chatId,
+  attachments,
+  setAttachments,
+  messages,
+  handleSubmit,
+}: MultimodalInputProps) {
+  const [showSearchTools, setShowSearchTools] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const submitForm = useCallback(() => {
-    window.history.replaceState({}, '', `/chat/${chatId}`);
-
-    handleSubmit(undefined, {
-      experimental_attachments: attachments,
-    });
-
-    setAttachments([]);
-    setLocalStorageInput('');
-    resetHeight();
-
-    if (width && width > 768) {
-      textareaRef.current?.focus();
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [
-    attachments,
-    handleSubmit,
-    setAttachments,
-    setLocalStorageInput,
-    width,
-    chatId,
-  ]);
+  }, [input]);
 
-  const uploadFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length === 0) return;
+
+    // Validate file types
+    const validFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    const invalidFiles = files.filter(file => !validFileTypes.includes(file.type));
+
+    if (invalidFiles.length > 0) {
+      toast.error('Only JPEG, PNG, WebP images and PDF files are supported');
+      return;
+    }
+
+    // Validate file sizes
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const oversizedFiles = files.filter(file => file.size > maxSize);
+
+    if (oversizedFiles.length > 0) {
+      toast.error('Files must be smaller than 10MB');
+      return;
+    }
+
+    toast.info(`Uploading ${files.length} file(s)...`);
 
     try {
-      // Route structure needs to match the app/(chat)/api/files/upload directory structure
-      // but in the URL we don't include the parentheses
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData,
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Upload failed');
+        }
+
+        const data = await response.json();
+        return {
+          url: data.url,
+          name: data.pathname,
+          contentType: data.contentType,
+        };
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          url,
-          name: pathname,
-          contentType: contentType,
-        };
-      }
-      const errorData = await response.json();
-      const errorMessage = errorData.details || errorData.error || 'Upload failed';
-      toast.error(errorMessage);
-      console.error('Upload error:', errorData);
+      const uploadedAttachments = await Promise.all(uploadPromises);
+      setAttachments(prev => [...prev, ...uploadedAttachments]);
+      toast.success(`Successfully uploaded ${files.length} file(s)`);
     } catch (error) {
-      console.error('Upload exception:', error);
-      toast.error('Failed to upload file, please try again!');
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file(s), please try again');
+    }
+
+    // Clear input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-
-      if (files.length === 0) return;
-
-      // Validate file types client-side before uploading
-      const validFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-      const invalidFiles = files.filter(file => !validFileTypes.includes(file.type));
-
-      if (invalidFiles.length > 0) {
-        toast.error('Only JPEG, PNG, WebP images and PDF files are supported');
-        return;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      if (isLoading) {
+        toast.error('Please wait for the model to finish its response!');
+      } else if (input.trim()) {
+        submitForm();
       }
+    }
+  };
 
-      // Validate file sizes
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      const oversizedFiles = files.filter(file => file.size > maxSize);
-
-      if (oversizedFiles.length > 0) {
-        toast.error('Files must be smaller than 10MB');
-        return;
+  const submitForm = () => {
+    if (input.trim()) {
+      handleSubmit(undefined, {
+        experimental_attachments: attachments,
+      });
+      setInput('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
       }
-
-      setUploadQueue(files.map((file) => file.name));
-      toast.info(`Uploading ${files.length} file(s)...`);
-
-      try {
-        const uploadPromises = files.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
-        );
-
-        if (successfullyUploadedAttachments.length > 0) {
-          setAttachments((currentAttachments) => [
-            ...currentAttachments,
-            ...successfullyUploadedAttachments,
-          ]);
-          toast.success(`Successfully uploaded ${successfullyUploadedAttachments.length} file(s)`);
-        } else {
-          toast.error('No files were uploaded successfully');
-        }
-      } catch (error) {
-        console.error('Error uploading files!', error);
-        toast.error('Upload failed. Please try again.');
-      } finally {
-        setUploadQueue([]);
-        // Clear the file input so the same file can be selected again
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      }
-    },
-    [setAttachments],
-  );
+      setAttachments([]);
+      setShowSearchTools(false); // Hide search tools after submission
+    }
+  };
 
   return (
-    <div className="relative w-full flex flex-col gap-4">
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions append={append} chatId={chatId} />
-        )}
+    <div className="relative w-full">
+      {messages.length === 0 && attachments.length === 0 && (
+        <SuggestedActions append={append} chatId={chatId} />
+      )}
 
-      <input
-        type="file"
-        className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
-        ref={fileInputRef}
-        multiple
-        onChange={handleFileChange}
-        tabIndex={-1}
-      />
-
-      {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div
-          data-testid="attachments-preview"
-          className="flex flex-row gap-2 overflow-x-scroll items-end"
-        >
-          {attachments.map((attachment) => (
-            <PreviewAttachment key={attachment.url} attachment={attachment} />
-          ))}
-
-          {uploadQueue.map((filename) => (
-            <PreviewAttachment
-              key={filename}
-              attachment={{
-                url: '',
-                name: filename,
-                contentType: '',
-              }}
-              isUploading={true}
-            />
-          ))}
+      {showSearchTools && (
+        <div className="absolute bottom-full mb-4 w-full">
+          <ChatTools
+            onToolResult={(result) => {
+              const newInput = input + (input ? '\n\n' : '') + result;
+              setInput(newInput);
+              setShowSearchTools(false);
+            }}
+            isLoading={isLoading}
+          />
         </div>
       )}
 
-      <Textarea
-        data-testid="multimodal-input"
-        ref={textareaRef}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cx(
-          'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700',
-          className,
-        )}
-        rows={2}
-        autoFocus
-        onKeyDown={(event) => {
-          if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
-
-            if (isLoading) {
-              toast.error('Please wait for the model to finish its response!');
-            } else {
-              submitForm();
-            }
-          }
-        }}
-      />
-
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton fileInputRef={fileInputRef} isLoading={isLoading} />
-      </div>
-
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {isLoading ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-            uploadQueue={uploadQueue}
+      <div className="relative flex w-full grow flex-row items-start gap-2 overflow-hidden rounded-md border bg-background px-3 py-4 text-sm ring-offset-background">
+        <div className="flex flex-col items-center gap-2 pt-[0.4rem]">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleFileClick}
+            disabled={isLoading}
+          >
+            <PaperclipIcon className="h-5 w-5" />
+            <span className="sr-only">Attach files</span>
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+            multiple
+            accept="image/jpeg,image/png,image/webp,application/pdf"
           />
-        )}
+        </div>
+
+        <Textarea
+          ref={textareaRef}
+          tabIndex={0}
+          rows={1}
+          placeholder="Send a message..."
+          spellCheck={false}
+          className="min-h-[98px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-visible:outline-none focus-visible:ring-0"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isLoading}
+        />
+
+        <div className="flex flex-col items-center gap-2 pt-[0.4rem]">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowSearchTools(!showSearchTools)}
+            disabled={isLoading}
+          >
+            <SearchIcon className="h-5 w-5" />
+            <span className="sr-only">Search tools</span>
+          </Button>
+
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            disabled={isLoading || input.trim().length === 0}
+            onClick={(e) => {
+              e.preventDefault();
+              submitForm();
+            }}
+          >
+            <ArrowUpIcon className="h-5 w-5" />
+            <span className="sr-only">Send message</span>
+          </Button>
+        </div>
       </div>
+
+      {attachments.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {attachments.map((attachment, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-2 rounded-md bg-muted p-2"
+            >
+              <span className="text-sm">{attachment.name}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setAttachments(prev => prev.filter((_, i) => i !== index));
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export const MultimodalInput = memo(
-  PureMultimodalInput,
-  (prevProps, nextProps) => {
+  MultimodalInputBase,
+  (prevProps: MultimodalInputProps, nextProps: MultimodalInputProps) => {
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.isLoading !== nextProps.isLoading) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
-
+    if (!equal(prevProps.messages, nextProps.messages)) return false;
     return true;
   },
 );
@@ -370,7 +312,7 @@ function PureStopButton({
         setMessages((messages) => sanitizeUIMessages(messages));
       }}
     >
-      <StopIcon size={14} />
+      <XCircleIcon size={14} />
     </Button>
   );
 }

@@ -2,12 +2,15 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   experimental: {
-    ppr: true,
+    serverActions: {
+      allowedOrigins: ['localhost:3000', '127.0.0.1:54614'],
+    },
   },
   images: {
     remotePatterns: [
       {
-        hostname: 'avatar.vercel.sh',
+        protocol: 'https',
+        hostname: '**',
       },
     ],
   },

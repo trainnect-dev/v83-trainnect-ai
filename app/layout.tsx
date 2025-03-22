@@ -54,6 +54,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: THEME_COLOR_SCRIPT,
           }}
+          suppressHydrationWarning
         />
       </head>
       <body className="antialiased">
